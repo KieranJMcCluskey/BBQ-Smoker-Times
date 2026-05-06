@@ -1,0 +1,497 @@
+import { useState, useEffect, useRef } from "react";
+
+// ─── SMOKER DATA ────────────────────────────────────────────────────────────
+const smokerCuts = {
+  beef: [
+    { name: "Brisket", emoji: "🥩", cookTemp: 110, internalTemp: { min: 90, max: 96 }, restTime: "60–120 min", timeGuide: "1.5–2 hrs/kg", minHrsPerKg: 1.5, maxHrsPerKg: 2, notes: "Cook to probe tender, not just temp. Wrap in butcher paper at 74°C." },
+    { name: "Short Ribs", emoji: "🦴", cookTemp: 120, internalTemp: { min: 93, max: 98 }, restTime: "30–45 min", timeGuide: "1.5 hrs/kg", minHrsPerKg: 1.5, maxHrsPerKg: 1.5, notes: "Probe should slide in like warm butter when done." },
+    { name: "Chuck Roast", emoji: "🥩", cookTemp: 110, internalTemp: { min: 90, max: 95 }, restTime: "45–60 min", timeGuide: "1.5 hrs/kg", minHrsPerKg: 1.5, maxHrsPerKg: 1.5, notes: "Great pulled beef. Wrap at 71°C to push through the stall." },
+    { name: "Tri-Tip", emoji: "🥩", cookTemp: 120, internalTemp: { min: 57, max: 63 }, restTime: "15–20 min", timeGuide: "45–60 min/kg", minHrsPerKg: 0.75, maxHrsPerKg: 1, notes: "Reverse sear finish for best crust. Rest is critical.", doneness: ["rare", "medium-rare", "medium"] },
+    { name: "Ribeye (whole)", emoji: "🥩", cookTemp: 107, internalTemp: { min: 52, max: 60 }, restTime: "20–30 min", timeGuide: "30–45 min/kg", minHrsPerKg: 0.5, maxHrsPerKg: 0.75, notes: "Smoke low, sear hot. Pull 5°C below target — carry-over does the rest.", doneness: ["rare", "medium-rare", "medium"] },
+  ],
+  wagyu: [
+    { name: "Wagyu Brisket", emoji: "🥇", cookTemp: 107, internalTemp: { min: 88, max: 93 }, restTime: "90–120 min", timeGuide: "1.5–2 hrs/kg", minHrsPerKg: 1.5, maxHrsPerKg: 2, notes: "Lower target than regular brisket — fat renders earlier. Butcher paper only, no foil." },
+    { name: "Wagyu Ribeye (MS7+)", emoji: "🥇", cookTemp: 100, internalTemp: { min: 50, max: 55 }, restTime: "20–30 min", timeGuide: "30–40 min/kg", minHrsPerKg: 0.5, maxHrsPerKg: 0.67, notes: "Pull earlier — fat content means carry-over is significant. Sear hard and fast.", doneness: ["rare", "medium-rare"] },
+    { name: "Wagyu Short Rib", emoji: "🥇", cookTemp: 110, internalTemp: { min: 90, max: 95 }, restTime: "45–60 min", timeGuide: "1.5 hrs/kg", minHrsPerKg: 1.5, maxHrsPerKg: 1.5, notes: "The pinnacle of low-and-slow. Season simply — salt and pepper only. Let the beef do the work." },
+    { name: "Wagyu Tomahawk", emoji: "🪓", cookTemp: 107, internalTemp: { min: 50, max: 55 }, restTime: "20–30 min", timeGuide: "35–45 min/kg", minHrsPerKg: 0.58, maxHrsPerKg: 0.75, notes: "Bone insulates — monitor temp near the bone. Finish with a scorching sear.", doneness: ["rare", "medium-rare"] },
+  ],
+  pork: [
+    { name: "Pork Shoulder / Butt", emoji: "🐷", cookTemp: 110, internalTemp: { min: 93, max: 96 }, restTime: "60–120 min", timeGuide: "1.5–2 hrs/kg", minHrsPerKg: 1.5, maxHrsPerKg: 2, notes: "The stall (65–75°C) can last hours — be patient. Wrap to push through." },
+    { name: "Baby Back Ribs", emoji: "🦴", cookTemp: 120, internalTemp: { min: 88, max: 93 }, restTime: "10–15 min", timeGuide: "3–2–1 method", fixedHrs: 6, notes: "Bend test: ribs should crack slightly when bent. Temp is secondary." },
+    { name: "Spare Ribs", emoji: "🦴", cookTemp: 120, internalTemp: { min: 88, max: 93 }, restTime: "15–20 min", timeGuide: "3–2–1 method", fixedHrs: 6, notes: "Remove membrane. Bigger than baby backs — allow extra time." },
+    { name: "Pork Belly", emoji: "🐷", cookTemp: 120, internalTemp: { min: 74, max: 80 }, restTime: "20 min", timeGuide: "1–1.5 hrs/kg", minHrsPerKg: 1, maxHrsPerKg: 1.5, notes: "Score skin for crackling. Higher temp finish for crispy skin." },
+    { name: "Pork Loin", emoji: "🐷", cookTemp: 110, internalTemp: { min: 63, max: 68 }, restTime: "10–15 min", timeGuide: "45 min/kg", minHrsPerKg: 0.75, maxHrsPerKg: 0.75, notes: "Do not overcook — lean cut dries out fast. Pull at 63°C." },
+  ],
+  sausages: [
+    { name: "Beef Snags", emoji: "🌭", cookTemp: 120, internalTemp: { min: 71, max: 74 }, restTime: "5 min", timeGuide: "~1.25 hrs", fixedHrs: 1.25, notes: "Don't pierce the skin. Low and slow keeps them juicy. Finish on direct heat for snap." },
+    { name: "Bratwurst", emoji: "🌭", cookTemp: 110, internalTemp: { min: 71, max: 74 }, restTime: "5 min", timeGuide: "~1.25 hrs", fixedHrs: 1.25, notes: "Smoke over apple or cherry wood. Bath in beer & onions after smoking." },
+    { name: "Chorizo", emoji: "🌶️", cookTemp: 120, internalTemp: { min: 71, max: 74 }, restTime: "5 min", timeGuide: "~1 hr", fixedHrs: 1, notes: "High fat — watch for flare-ups if finishing on grill. Mesquite wood complements well." },
+    { name: "Smoked Kielbasa", emoji: "🌭", cookTemp: 110, internalTemp: { min: 71, max: 74 }, restTime: "5 min", timeGuide: "~1.75 hrs", fixedHrs: 1.75, notes: "Takes smoke beautifully. Use hickory or oak. Great sliced as an appetiser." },
+  ],
+  seafood: [
+    { name: "Whole Lobster", emoji: "🦞", cookTemp: 135, internalTemp: { min: 63, max: 65 }, restTime: "5 min", timeGuide: "~35 min", fixedHrs: 0.6, notes: "Split lengthwise, brush with garlic butter. Smoke shell-side down. Meat turns opaque when done." },
+    { name: "King Prawns", emoji: "🦐", cookTemp: 165, internalTemp: { min: 60, max: 63 }, restTime: "None", timeGuide: "~20 min", fixedHrs: 0.3, notes: "Shell-on for protection and flavour. Pink and curled = done. Don't overcook." },
+    { name: "Salmon Fillet", emoji: "🐟", cookTemp: 107, internalTemp: { min: 52, max: 60 }, restTime: "5 min", timeGuide: "~45 min", fixedHrs: 0.75, notes: "Brine 1–4 hrs before smoking. Pull early for silkier texture. Alder or apple wood." },
+    { name: "Scallops", emoji: "🐚", cookTemp: 135, internalTemp: { min: 52, max: 57 }, restTime: "None", timeGuide: "~18 min", fixedHrs: 0.3, notes: "Pat dry. Watch closely — translucent centre is fine. Finish with brown butter." },
+    { name: "Oysters", emoji: "🦪", cookTemp: 165, internalTemp: { min: 63, max: 65 }, restTime: "None", timeGuide: "~12 min", fixedHrs: 0.2, notes: "Smoke in shell. Done when they open slightly and edges curl." },
+  ],
+  lamb: [
+    { name: "Lamb Shoulder", emoji: "🐑", cookTemp: 120, internalTemp: { min: 90, max: 95 }, restTime: "45–60 min", timeGuide: "1.5–2 hrs/kg", minHrsPerKg: 1.5, maxHrsPerKg: 2, notes: "Excellent with rosemary & garlic injection. Wrap at 72°C." },
+    { name: "Lamb Leg", emoji: "🐑", cookTemp: 120, internalTemp: { min: 60, max: 70 }, restTime: "20–30 min", timeGuide: "45–60 min/kg", minHrsPerKg: 0.75, maxHrsPerKg: 1, notes: "Medium is the sweet spot. Bone-in adds flavour and time.", doneness: ["medium-rare", "medium", "well"] },
+    { name: "Lamb Ribs", emoji: "🦴", cookTemp: 120, internalTemp: { min: 85, max: 90 }, restTime: "15 min", timeGuide: "~2.5 hrs", fixedHrs: 2.5, notes: "Rich and fatty — higher internal temp renders fat better." },
+  ],
+  poultry: [
+    { name: "Whole Chicken", emoji: "🍗", cookTemp: 165, internalTemp: { min: 74, max: 77 }, restTime: "15–20 min", timeGuide: "45–60 min/kg", minHrsPerKg: 0.75, maxHrsPerKg: 1, notes: "Measure thigh temp, not breast. Spatchcock for faster, even cook." },
+    { name: "Chicken Thighs", emoji: "🍗", cookTemp: 165, internalTemp: { min: 74, max: 82 }, restTime: "5–10 min", timeGuide: "~1.25 hrs", fixedHrs: 1.25, notes: "Dark meat is forgiving — push higher for better texture and rendering." },
+    { name: "Whole Turkey", emoji: "🦃", cookTemp: 165, internalTemp: { min: 74, max: 77 }, restTime: "30–45 min", timeGuide: "30–40 min/kg", minHrsPerKg: 0.5, maxHrsPerKg: 0.67, notes: "Brine 24 hrs. Breast hits temp before thigh — monitor both." },
+    { name: "Duck Breast", emoji: "🦆", cookTemp: 135, internalTemp: { min: 57, max: 63 }, restTime: "10 min", timeGuide: "~50 min", fixedHrs: 0.75, notes: "Score fat cap deeply. Lower temp to render fat slowly.", doneness: ["medium-rare", "medium"] },
+  ],
+};
+
+// ─── BBQ GRILL DATA ──────────────────────────────────────────────────────────
+const bbqCuts = {
+  beef: [
+    { name: "Ribeye Steak", emoji: "🥩", cookTemp: 230, internalTemp: { min: 52, max: 57 }, restTime: "5–8 min", timeGuide: "3–4 min/side", fixedHrs: 0.12, notes: "Get the grill ripping hot. Sear 2–3 min each side, rest on indirect heat. Salt generously 1 hr before.", doneness: ["rare", "medium-rare", "medium"] },
+    { name: "Sirloin Steak", emoji: "🥩", cookTemp: 230, internalTemp: { min: 54, max: 60 }, restTime: "5 min", timeGuide: "3–4 min/side", fixedHrs: 0.12, notes: "Less marbled than ribeye — don't push past medium or it tightens. Butter baste off heat.", doneness: ["medium-rare", "medium"] },
+    { name: "T-Bone / Porterhouse", emoji: "🦴", cookTemp: 220, internalTemp: { min: 54, max: 60 }, restTime: "5–8 min", timeGuide: "4–5 min/side", fixedHrs: 0.15, notes: "Two muscles cook at different rates. Keep the fillet away from direct flame. Bone side down first.", doneness: ["rare", "medium-rare", "medium"] },
+    { name: "Beef Burgers", emoji: "🍔", cookTemp: 200, internalTemp: { min: 71, max: 75 }, restTime: "2–3 min", timeGuide: "4–5 min/side", fixedHrs: 0.15, notes: "Do not press! Flip once. Add cheese on last 60 seconds. 80/20 mince for best results." },
+    { name: "Beef Skewers", emoji: "🍢", cookTemp: 220, internalTemp: { min: 63, max: 70 }, restTime: "3 min", timeGuide: "10–12 min total", fixedHrs: 0.18, notes: "Cut uniform pieces. Don't over-pack. Turn every 2–3 min. Marinate overnight." },
+  ],
+  wagyu: [
+    { name: "Wagyu Striploin", emoji: "🥇", cookTemp: 250, internalTemp: { min: 50, max: 54 }, restTime: "5–8 min", timeGuide: "2–3 min/side", fixedHrs: 0.08, notes: "Extremely fast at high heat. Pull at 50°C — carry-over will finish it. No oil needed.", doneness: ["rare", "medium-rare"] },
+    { name: "Wagyu Burger", emoji: "🍔", cookTemp: 200, internalTemp: { min: 65, max: 70 }, restTime: "2 min", timeGuide: "3–4 min/side", fixedHrs: 0.12, notes: "Rich fat content — expect flare-ups. Keep a spray bottle handy. Season with salt only; it needs nothing else." },
+    { name: "Wagyu Flat Iron", emoji: "🥇", cookTemp: 230, internalTemp: { min: 52, max: 57 }, restTime: "5 min", timeGuide: "3–4 min/side", fixedHrs: 0.12, notes: "Underrated cut. Slice against the grain after resting. Short, hot cook is essential.", doneness: ["rare", "medium-rare"] },
+  ],
+  pork: [
+    { name: "Pork Chops", emoji: "🐷", cookTemp: 200, internalTemp: { min: 63, max: 68 }, restTime: "5 min", timeGuide: "4–5 min/side", fixedHrs: 0.15, notes: "Bone-in stays juicier. Brine 2–4 hrs. Watch for flare-ups from fat. Don't overcook — 63°C is the safe pull." },
+    { name: "Pork Ribs (indirect)", emoji: "🦴", cookTemp: 160, internalTemp: { min: 88, max: 93 }, restTime: "10 min", timeGuide: "2–3 hrs indirect", fixedHrs: 2.5, notes: "Use indirect zone. Wrap in foil for last 30 min for tenderness. Finish direct for char." },
+    { name: "Pork Sausages", emoji: "🌭", cookTemp: 180, internalTemp: { min: 71, max: 74 }, restTime: "3 min", timeGuide: "12–15 min", fixedHrs: 0.22, notes: "Medium heat — don't char the outside before the inside cooks. Turn every 3–4 min. Never pierce!" },
+    { name: "Pork Belly Slices", emoji: "🐷", cookTemp: 200, internalTemp: { min: 74, max: 80 }, restTime: "5 min", timeGuide: "5–6 min/side", fixedHrs: 0.2, notes: "Score fat for crackling. Start fat-side down. Watch for flare-ups. High heat finish for crispy skin." },
+  ],
+  chicken: [
+    { name: "Chicken Breast", emoji: "🍗", cookTemp: 200, internalTemp: { min: 74, max: 77 }, restTime: "5 min", timeGuide: "5–7 min/side", fixedHrs: 0.2, notes: "Pound to even thickness for consistent cook. Brine or marinate. Pull at 74°C — carryover will be your friend." },
+    { name: "Chicken Thighs (bone-in)", emoji: "🍗", cookTemp: 190, internalTemp: { min: 77, max: 82 }, restTime: "5 min", timeGuide: "6–8 min/side", fixedHrs: 0.25, notes: "Dark meat is forgiving. Skin-side down first on direct heat, flip to indirect to finish. Higher temp = better texture." },
+    { name: "Chicken Wings", emoji: "🍗", cookTemp: 200, internalTemp: { min: 74, max: 80 }, restTime: "3 min", timeGuide: "20–25 min total", fixedHrs: 0.37, notes: "Indirect first 15 min, then direct blast for crispy skin. Sauce in last 5 min only." },
+    { name: "Spatchcock Chicken", emoji: "🐔", cookTemp: 180, internalTemp: { min: 74, max: 77 }, restTime: "10–15 min", timeGuide: "45–60 min indirect", fixedHrs: 0.85, notes: "Remove backbone, flatten. Indirect heat with lid down. Measure thigh temp. Best whole bird method on a BBQ." },
+  ],
+  seafood: [
+    { name: "King Prawns", emoji: "🦐", cookTemp: 220, internalTemp: { min: 60, max: 63 }, restTime: "None", timeGuide: "2–3 min/side", fixedHrs: 0.08, notes: "Shell-on keeps moisture in. High heat, fast cook. Pink and curled = done. Garlic butter mandatory." },
+    { name: "Whole Fish", emoji: "🐠", cookTemp: 180, internalTemp: { min: 63, max: 65 }, restTime: "5 min", timeGuide: "8–10 min/side", fixedHrs: 0.3, notes: "Oil grill grates heavily — fish sticks. Score flesh. Don't rush the flip; it releases when ready." },
+    { name: "Salmon Fillet", emoji: "🐟", cookTemp: 180, internalTemp: { min: 52, max: 60 }, restTime: "3 min", timeGuide: "4–5 min/side", fixedHrs: 0.15, notes: "Skin-side down on oiled grill. Lid down. Don't flip if skin is sticking — it needs more time.", doneness: ["rare", "medium-rare", "medium"] },
+    { name: "Scallops", emoji: "🐚", cookTemp: 230, internalTemp: { min: 52, max: 57 }, restTime: "None", timeGuide: "2 min/side", fixedHrs: 0.07, notes: "Screaming hot grill. Pat dry — moisture kills the sear. 90 seconds each side max. Caramelised crust = done." },
+    { name: "Lobster Tails", emoji: "🦞", cookTemp: 200, internalTemp: { min: 63, max: 65 }, restTime: "3 min", timeGuide: "5–7 min", fixedHrs: 0.2, notes: "Split shell, brush with garlic butter. Shell-side down first, flesh-side 2–3 min. Don't overcook — rubbery is a crime." },
+  ],
+  lamb: [
+    { name: "Lamb Chops", emoji: "🐑", cookTemp: 220, internalTemp: { min: 60, max: 65 }, restTime: "5 min", timeGuide: "3–4 min/side", fixedHrs: 0.12, notes: "High heat, fast cook. Marinate in garlic, rosemary, lemon. Fat side down first to render.", doneness: ["medium-rare", "medium"] },
+    { name: "Lamb Cutlets", emoji: "🐑", cookTemp: 230, internalTemp: { min: 57, max: 63 }, restTime: "3–5 min", timeGuide: "2–3 min/side", fixedHrs: 0.08, notes: "The lollipop cut. Fast, hot, done. Frenched bone = natural handle. Don't walk away.", doneness: ["medium-rare", "medium"] },
+    { name: "Lamb Kebabs", emoji: "🍢", cookTemp: 210, internalTemp: { min: 70, max: 75 }, restTime: "3 min", timeGuide: "10–12 min", fixedHrs: 0.18, notes: "Kofta-style or cubed — both work. Medium heat so the inside cooks before the outside burns. Rest before pulling off skewer." },
+    { name: "Butterflied Leg", emoji: "🐑", cookTemp: 180, internalTemp: { min: 63, max: 68 }, restTime: "15 min", timeGuide: "30–40 min indirect", fixedHrs: 0.58, notes: "Indirect zone with lid down. Uneven thickness = some parts more done than others — embrace it. Marinate overnight.", doneness: ["medium-rare", "medium"] },
+  ],
+  sides: [
+    { name: "Corn on the Cob", emoji: "🌽", cookTemp: 200, internalTemp: null, restTime: "None", timeGuide: "12–15 min", fixedHrs: 0.22, notes: "Husk on for steam-roast effect, or husk off for char. Butter and salt after. Turn every 3–4 min." },
+    { name: "Halloumi", emoji: "🧀", cookTemp: 200, internalTemp: null, restTime: "2 min", timeGuide: "2–3 min/side", fixedHrs: 0.08, notes: "Dry grill — no oil needed. Hot and fast. Eat immediately; it gets rubbery as it cools." },
+    { name: "Capsicum / Peppers", emoji: "🫑", cookTemp: 200, internalTemp: null, restTime: "None", timeGuide: "10–12 min", fixedHrs: 0.18, notes: "Char skin all over then bag to steam for 10 min — skin peels off easily. Drizzle with olive oil and salt." },
+    { name: "Mushrooms", emoji: "🍄", cookTemp: 200, internalTemp: null, restTime: "None", timeGuide: "5–8 min/side", fixedHrs: 0.22, notes: "Large field mushrooms gill-side up with butter and garlic. Don't press — let them steam in their own moisture." },
+    { name: "Asparagus", emoji: "🌿", cookTemp: 220, internalTemp: null, restTime: "None", timeGuide: "3–5 min", fixedHrs: 0.07, notes: "High heat, direct. Toss in oil and salt. Roll on grill for even char. Snap woody ends before cooking." },
+  ],
+};
+
+const smokerCategoryColors = {
+  beef: "#c0392b", wagyu: "#c9a84c", pork: "#e67e22", sausages: "#b87333",
+  seafood: "#1a7abf", lamb: "#8e44ad", poultry: "#c9a020",
+};
+const smokerCategoryLabels = {
+  beef: "🥩 Beef", wagyu: "🥇 Wagyu", pork: "🐷 Pork", sausages: "🌭 Sausages",
+  seafood: "🦞 Seafood", lamb: "🐑 Lamb", poultry: "🍗 Poultry",
+};
+
+const bbqCategoryColors = {
+  beef: "#c0392b", wagyu: "#c9a84c", pork: "#e67e22", chicken: "#d4a020",
+  seafood: "#1a7abf", lamb: "#8e44ad", sides: "#2e7d52",
+};
+const bbqCategoryLabels = {
+  beef: "🥩 Beef", wagyu: "🥇 Wagyu", pork: "🐷 Pork", chicken: "🍗 Chicken",
+  seafood: "🦞 Seafood", lamb: "🐑 Lamb", sides: "🌽 Sides",
+};
+
+const donenessTemps = {
+  rare: { label: "Rare", temp: 52, color: "#e74c3c" },
+  "medium-rare": { label: "Med-Rare", temp: 57, color: "#e67e22" },
+  medium: { label: "Medium", temp: 63, color: "#f39c12" },
+  well: { label: "Well Done", temp: 74, color: "#7f8c8d" },
+};
+
+function formatTimer(secs) {
+  const h = Math.floor(secs / 3600);
+  const m = Math.floor((secs % 3600) / 60);
+  const s = secs % 60;
+  return h > 0
+    ? `${h}:${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`
+    : `${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
+}
+
+function TempGauge({ value, min, max, color }) {
+  const pct = Math.min(100, Math.max(0, ((value - min) / (max - min)) * 100));
+  return (
+    <div style={{ position: "relative", height: 5, background: "#1a1a1a", borderRadius: 3, overflow: "hidden", marginTop: 8 }}>
+      <div style={{ position: "absolute", left: 0, top: 0, height: "100%", width: `${pct}%`, background: `linear-gradient(90deg, ${color}55, ${color})`, borderRadius: 3, transition: "width 0.5s ease", boxShadow: `0 0 8px ${color}77` }} />
+    </div>
+  );
+}
+
+function CookTimer({ cut, weight, accentColor }) {
+  const [timerSecs, setTimerSecs] = useState(null);
+  const [running, setRunning] = useState(false);
+  const [elapsed, setElapsed] = useState(0);
+  const [customHrs, setCustomHrs] = useState("");
+  const intervalRef = useRef(null);
+
+  const estimateSeconds = () => {
+    if (cut.fixedHrs) return Math.round(cut.fixedHrs * 3600);
+    if (cut.minHrsPerKg && weight && parseFloat(weight) > 0) {
+      const avg = (cut.minHrsPerKg + (cut.maxHrsPerKg || cut.minHrsPerKg)) / 2;
+      return Math.round(avg * parseFloat(weight) * 3600);
+    }
+    return null;
+  };
+
+  const estimated = estimateSeconds();
+
+  useEffect(() => { setRunning(false); setElapsed(0); setTimerSecs(null); clearInterval(intervalRef.current); }, [cut]);
+  useEffect(() => {
+    if (running) { intervalRef.current = setInterval(() => setElapsed(e => e + 1), 1000); }
+    else clearInterval(intervalRef.current);
+    return () => clearInterval(intervalRef.current);
+  }, [running]);
+
+  const total = timerSecs || 0;
+  const remaining = Math.max(0, total - elapsed);
+  const pct = total > 0 ? Math.min(100, (elapsed / total) * 100) : 0;
+  const done = timerSecs && elapsed >= total;
+  const startTimer = (secs) => { setTimerSecs(secs); setElapsed(0); setRunning(true); };
+  const reset = () => { setRunning(false); setElapsed(0); setTimerSecs(null); };
+
+  return (
+    <div style={{ background: "#0a0a0a", border: `1px solid ${accentColor}2a`, borderRadius: 3, padding: "18px 20px", marginTop: 14 }}>
+      <div style={{ fontSize: 9, color: "#484848", letterSpacing: "0.22em", marginBottom: 12 }}>⏱ COOK TIMER</div>
+      {!timerSecs ? (
+        <div>
+          <div style={{ marginBottom: 10 }}>
+            {estimated ? (
+              <button onClick={() => startTimer(estimated)} style={{ background: accentColor, border: "none", color: "#0d0d0d", padding: "10px 18px", fontFamily: "'Crimson Pro', serif", fontSize: 14, fontWeight: 700, cursor: "pointer", borderRadius: 2 }}>
+                ▶ Start — {formatTimer(estimated)} estimated
+              </button>
+            ) : (
+              <div style={{ fontFamily: "'Crimson Pro', serif", fontSize: 13, color: "#383838" }}>
+                {cut.minHrsPerKg ? "Enter weight above for auto-estimate" : "Set a custom time below"}
+              </div>
+            )}
+          </div>
+          <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+            <input type="number" placeholder="Custom hrs (e.g. 0.25)" value={customHrs} onChange={e => setCustomHrs(e.target.value)}
+              style={{ background: "#141414", border: "1px solid #222", color: "#e8d5b0", padding: "8px 11px", fontFamily: "'Crimson Pro', serif", fontSize: 14, width: 185, borderRadius: 2, outline: "none" }}
+              min="0.05" max="24" step="0.05" />
+            <button onClick={() => { if (customHrs && parseFloat(customHrs) > 0) startTimer(Math.round(parseFloat(customHrs) * 3600)); }}
+              style={{ background: "#1a1a1a", border: "1px solid #2a2a2a", color: "#777", padding: "8px 14px", fontFamily: "'Crimson Pro', serif", fontSize: 13, cursor: "pointer", borderRadius: 2 }}>
+              Set Custom
+            </button>
+          </div>
+        </div>
+      ) : (
+        <div>
+          <div style={{ display: "flex", alignItems: "baseline", gap: 12, marginBottom: 12 }}>
+            <div style={{ fontFamily: "'Playfair Display', serif", fontSize: done ? 32 : 50, fontWeight: 900, color: done ? "#2ecc71" : running ? accentColor : "#777", letterSpacing: "-0.02em", lineHeight: 1, transition: "color 0.4s", textShadow: done ? "0 0 24px #2ecc7155" : running ? `0 0 24px ${accentColor}44` : "none" }}>
+              {done ? "✓ TIME'S UP" : formatTimer(remaining)}
+            </div>
+            {!done && <div style={{ fontFamily: "'Crimson Pro', serif", fontSize: 12, color: "#333" }}>/ {formatTimer(total)}</div>}
+          </div>
+          <div style={{ position: "relative", height: 6, background: "#1a1a1a", borderRadius: 4, overflow: "hidden", marginBottom: 12 }}>
+            <div style={{ position: "absolute", left: 0, top: 0, height: "100%", width: `${pct}%`, background: done ? "linear-gradient(90deg,#27ae60,#2ecc71)" : `linear-gradient(90deg,${accentColor}77,${accentColor})`, borderRadius: 4, transition: "width 1s linear", boxShadow: done ? "0 0 12px #2ecc7166" : `0 0 12px ${accentColor}55` }} />
+          </div>
+          <div style={{ fontFamily: "'Crimson Pro', serif", fontSize: 12, color: "#333", marginBottom: 12 }}>{formatTimer(elapsed)} elapsed · {Math.round(pct)}% through</div>
+          <div style={{ display: "flex", gap: 8 }}>
+            {!done && <button onClick={() => setRunning(r => !r)} style={{ background: running ? "#181818" : accentColor, border: `1px solid ${running ? "#2a2a2a" : accentColor}`, color: running ? "#777" : "#0d0d0d", padding: "8px 18px", fontFamily: "'Crimson Pro', serif", fontSize: 13, fontWeight: 700, cursor: "pointer", borderRadius: 2 }}>{running ? "⏸ Pause" : "▶ Resume"}</button>}
+            <button onClick={reset} style={{ background: "none", border: "1px solid #1e1e1e", color: "#444", padding: "8px 14px", fontFamily: "'Crimson Pro', serif", fontSize: 13, cursor: "pointer", borderRadius: 2 }}>↺ Reset</button>
+          </div>
+          {done && <div style={{ marginTop: 14, fontFamily: "'Crimson Pro', serif", fontSize: 14, color: "#c8a87a", borderLeft: `2px solid ${accentColor}55`, paddingLeft: 12, lineHeight: 1.6 }}>Done — rest for {cut.restTime} before slicing.</div>}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ─── MODE TOGGLE ─────────────────────────────────────────────────────────────
+function ModeToggle({ mode, onChange }) {
+  const isSmoker = mode === "smoker";
+  return (
+    <div style={{ display: "flex", alignItems: "center", justifyContent: "center", marginBottom: 36 }}>
+      <div style={{ position: "relative", display: "flex", background: "#0e0e0e", border: "1px solid #252525", borderRadius: 40, padding: 4, gap: 0, userSelect: "none" }}>
+        {/* sliding pill */}
+        <div style={{
+          position: "absolute",
+          top: 4, bottom: 4,
+          left: isSmoker ? "50%" : 4,
+          right: isSmoker ? 4 : "50%",
+          background: isSmoker ? "#8b4513" : "#c0392b",
+          borderRadius: 36,
+          transition: "left 0.35s cubic-bezier(.4,0,.2,1), right 0.35s cubic-bezier(.4,0,.2,1), background 0.35s",
+          boxShadow: isSmoker ? "0 0 18px #8b451366" : "0 0 18px #c0392b55",
+          zIndex: 0,
+        }} />
+        {[
+          { id: "bbq", label: "🔥 BBQ Grill", sub: "High heat · Fast cooks" },
+          { id: "smoker", label: "💨 Smoker", sub: "Low & slow · Hours" },
+        ].map(opt => (
+          <button
+            key={opt.id}
+            onClick={() => onChange(opt.id)}
+            style={{
+              position: "relative", zIndex: 1,
+              background: "none", border: "none", cursor: "pointer",
+              padding: "10px 28px", borderRadius: 36,
+              textAlign: "center", minWidth: 150,
+              transition: "color 0.25s",
+            }}
+          >
+            <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 15, fontWeight: 700, color: mode === opt.id ? "#fff" : "#444", transition: "color 0.25s", letterSpacing: "0.01em" }}>{opt.label}</div>
+            <div style={{ fontFamily: "'Crimson Pro', serif", fontSize: 11, color: mode === opt.id ? "#ffffff99" : "#2e2e2e", transition: "color 0.25s", letterSpacing: "0.08em", marginTop: 1 }}>{opt.sub}</div>
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// ─── MAIN APP ─────────────────────────────────────────────────────────────────
+export default function BBQApp() {
+  const [mode, setMode] = useState("bbq");
+  const [activeCategory, setActiveCategory] = useState("beef");
+  const [selectedCut, setSelectedCut] = useState(null);
+  const [weight, setWeight] = useState("");
+  const [currentTemp, setCurrentTemp] = useState("");
+  const [embers, setEmbers] = useState([]);
+
+  const isSmoker = mode === "smoker";
+  const cuts = isSmoker ? smokerCuts : bbqCuts;
+  const categoryColors = isSmoker ? smokerCategoryColors : bbqCategoryColors;
+  const categoryLabels = isSmoker ? smokerCategoryLabels : bbqCategoryLabels;
+
+  // Reset category/cut when mode changes
+  useEffect(() => {
+    setActiveCategory("beef");
+    setSelectedCut(null);
+    setWeight("");
+    setCurrentTemp("");
+  }, [mode]);
+
+  useEffect(() => {
+    setEmbers(Array.from({ length: 22 }, (_, i) => ({
+      id: i, left: `${Math.random() * 100}%`,
+      animationDelay: `${Math.random() * 8}s`,
+      animationDuration: `${4 + Math.random() * 6}s`,
+      size: `${3 + Math.random() * 5}px`,
+      opacity: 0.18 + Math.random() * 0.4,
+    })));
+  }, []);
+
+  const categoryCuts = (cuts[activeCategory] || []);
+  const cut = selectedCut;
+  const accentColor = categoryColors[activeCategory] || "#c0392b";
+
+  const tempStatus = cut && cut.internalTemp && currentTemp
+    ? Number(currentTemp) >= cut.internalTemp.max
+      ? { label: "✓ Pull it now!", color: "#2ecc71" }
+      : Number(currentTemp) >= cut.internalTemp.min
+      ? { label: "In the zone — nearly there", color: "#f39c12" }
+      : Number(currentTemp) >= cut.internalTemp.min - 10
+      ? { label: "Getting close", color: "#e67e22" }
+      : { label: isSmoker ? "Keep smoking" : "Keep grilling", color: "#c0392b" }
+    : null;
+
+  const cookTempLabel = isSmoker ? "SMOKER TEMP" : "GRILL TEMP";
+
+  return (
+    <div style={{ minHeight: "100vh", background: "#0d0d0d", color: "#e8d5b0", fontFamily: "Georgia,serif", position: "relative", overflow: "hidden" }}>
+      <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;900&family=Crimson+Pro:wght@300;400;600&display=swap');
+        *{box-sizing:border-box;margin:0;padding:0}
+        .ember{position:fixed;bottom:-10px;border-radius:50%;background:radial-gradient(circle,#ff6b00,#ff3300 60%,transparent);animation:rise linear infinite;pointer-events:none;filter:blur(1px);z-index:0}
+        @keyframes rise{0%{transform:translateY(0) scale(1);opacity:var(--op)}60%{transform:translateY(-55vh) translateX(15px) scale(0.7)}100%{transform:translateY(-100vh) translateX(-8px) scale(0.1);opacity:0}}
+        .cat-btn{background:none;border:1px solid #1e1e1e;color:#484848;padding:7px 13px;cursor:pointer;font-family:'Crimson Pro',serif;font-size:13px;letter-spacing:.04em;transition:all .2s;border-radius:2px;white-space:nowrap}
+        .cat-btn:hover{color:#e8d5b0;border-color:#2e2e2e}
+        .cat-btn.active{font-weight:700;color:#0d0d0d}
+        .cut-card{background:#131313;border:1px solid #1c1c1c;padding:14px 16px;cursor:pointer;transition:all .2s;border-radius:3px;position:relative;overflow:hidden}
+        .cut-card::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;background:transparent;transition:background .2s}
+        .cut-card:hover{background:#181818;border-color:#282828}
+        .cut-card:hover::before,.cut-card.selected::before{background:var(--accent)}
+        .cut-card.selected{background:#191919;border-color:#282828}
+        .detail-panel{background:#111;border:1px solid #1e1e1e;border-radius:3px;animation:slideIn .25s ease}
+        @keyframes slideIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+        .temp-input{background:#0d0d0d;border:1px solid #252525;color:#e8d5b0;padding:10px 13px;font-family:'Crimson Pro',serif;font-size:16px;width:100%;border-radius:2px;outline:none;transition:border-color .2s}
+        .temp-input:focus{border-color:var(--accent)}
+        .temp-input::placeholder{color:#2e2e2e}
+        .stat-box{background:#0d0d0d;border:1px solid #181818;border-radius:2px;padding:12px 14px}
+        .doneness-pill{padding:5px 12px;border-radius:2px;font-family:'Crimson Pro',serif;font-size:12px;letter-spacing:.04em;border:1px solid currentColor;opacity:.75}
+        .smoke-line{height:1px;background:linear-gradient(90deg,transparent,#252525,transparent);margin:18px 0}
+        ::-webkit-scrollbar{width:4px}::-webkit-scrollbar-track{background:#0d0d0d}::-webkit-scrollbar-thumb{background:#222;border-radius:2px}
+      `}</style>
+
+      {embers.map(e => (
+        <div key={e.id} className="ember" style={{ left: e.left, width: e.size, height: e.size, animationDelay: e.animationDelay, animationDuration: e.animationDuration, "--op": e.opacity }} />
+      ))}
+
+      <div style={{ position: "relative", zIndex: 1, maxWidth: 920, margin: "0 auto", padding: "36px 18px 80px" }}>
+
+        {/* Header */}
+        <div style={{ textAlign: "center", marginBottom: 32 }}>
+          <div style={{ fontSize: 10, letterSpacing: "0.38em", color: "#333", fontFamily: "'Crimson Pro', serif", marginBottom: 10, textTransform: "uppercase" }}>The Pitmaster's Reference</div>
+          <h1 style={{ fontFamily: "'Playfair Display', serif", fontSize: "clamp(34px, 8vw, 62px)", fontWeight: 900, letterSpacing: "-0.02em", color: "#e8d5b0", lineHeight: 1, marginBottom: 6 }}>
+            FIRE &amp; SMOKE
+          </h1>
+          <div style={{ fontSize: 12, color: "#363636", fontFamily: "'Crimson Pro', serif", letterSpacing: "0.14em" }}>
+            Cook Times · Internal Temps · Live Timer · Pitmaster Notes
+          </div>
+          <div style={{ width: 52, height: 2, background: `linear-gradient(90deg,transparent,${isSmoker ? "#8b4513" : "#c0392b"},transparent)`, margin: "14px auto 0", transition: "background 0.4s" }} />
+        </div>
+
+        {/* MODE TOGGLE */}
+        <ModeToggle mode={mode} onChange={(m) => setMode(m)} />
+
+        {/* Category tabs */}
+        <div style={{ display: "flex", gap: 6, flexWrap: "wrap", justifyContent: "center", marginBottom: 22 }}>
+          {Object.keys(cuts).map(cat => (
+            <button
+              key={cat}
+              className={`cat-btn${activeCategory === cat ? " active" : ""}`}
+              style={activeCategory === cat ? { background: categoryColors[cat], borderColor: categoryColors[cat] } : {}}
+              onClick={() => { setActiveCategory(cat); setSelectedCut(null); setWeight(""); setCurrentTemp(""); }}
+            >
+              {categoryLabels[cat]}
+            </button>
+          ))}
+        </div>
+
+        {/* Mode badge */}
+        <div style={{ textAlign: "center", marginBottom: 18 }}>
+          <span style={{ fontFamily: "'Crimson Pro', serif", fontSize: 12, color: "#383838", letterSpacing: "0.1em" }}>
+            {isSmoker ? "🌡 LOW & SLOW · 100–165°C smoker · Hours of cook time" : "🔥 HIGH HEAT · 180–250°C grill · Minutes of cook time"}
+          </span>
+        </div>
+
+        {/* Cut grid */}
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(215px, 1fr))", gap: 8, marginBottom: 18 }}>
+          {categoryCuts.map((c, i) => (
+            <div key={i} className={`cut-card${selectedCut === c ? " selected" : ""}`} style={{ "--accent": accentColor }} onClick={() => { setSelectedCut(c); setWeight(""); setCurrentTemp(""); }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 10 }}>
+                <span style={{ fontSize: 18 }}>{c.emoji}</span>
+                <span style={{ fontFamily: "'Playfair Display', serif", fontSize: 13, fontWeight: 700, color: "#e8d5b0", lineHeight: 1.2 }}>{c.name}</span>
+              </div>
+              <div style={{ display: "flex", gap: 16 }}>
+                <div>
+                  <div style={{ fontSize: 9, color: "#363636", letterSpacing: "0.12em", marginBottom: 2 }}>{isSmoker ? "SMOKER" : "GRILL"}</div>
+                  <div style={{ fontSize: 17, fontWeight: 700, color: accentColor, fontFamily: "'Playfair Display', serif" }}>{c.cookTemp}°</div>
+                </div>
+                <div>
+                  <div style={{ fontSize: 9, color: "#363636", letterSpacing: "0.12em", marginBottom: 2 }}>TARGET</div>
+                  <div style={{ fontSize: 17, fontWeight: 700, color: "#e8d5b0", fontFamily: "'Playfair Display', serif" }}>
+                    {c.internalTemp ? `${c.internalTemp.min}–${c.internalTemp.max}°` : "Visual"}
+                  </div>
+                </div>
+              </div>
+              {c.internalTemp && <TempGauge value={c.internalTemp.min} min={40} max={105} color={accentColor} />}
+            </div>
+          ))}
+        </div>
+
+        {/* Detail panel */}
+        {cut && (
+          <div className="detail-panel" style={{ padding: "22px 22px 26px" }}>
+            <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", flexWrap: "wrap", gap: 10, marginBottom: 18 }}>
+              <div>
+                <div style={{ fontSize: 9, color: "#363636", letterSpacing: "0.24em", marginBottom: 5 }}>SELECTED</div>
+                <h2 style={{ fontFamily: "'Playfair Display', serif", fontSize: 23, fontWeight: 900, color: "#e8d5b0" }}>{cut.emoji} {cut.name}</h2>
+              </div>
+              <button onClick={() => setSelectedCut(null)} style={{ background: "none", border: "1px solid #1e1e1e", color: "#363636", padding: "5px 11px", cursor: "pointer", borderRadius: 2, fontSize: 11, fontFamily: "'Crimson Pro', serif" }}>✕ close</button>
+            </div>
+
+            {/* Stats */}
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(120px, 1fr))", gap: 8, marginBottom: 18 }}>
+              <div className="stat-box">
+                <div style={{ fontSize: 9, color: "#363636", letterSpacing: "0.15em", marginBottom: 5 }}>{cookTempLabel}</div>
+                <div style={{ fontSize: 26, fontWeight: 900, fontFamily: "'Playfair Display', serif", color: accentColor }}>{cut.cookTemp}°C</div>
+              </div>
+              <div className="stat-box">
+                <div style={{ fontSize: 9, color: "#363636", letterSpacing: "0.15em", marginBottom: 5 }}>PULL TEMP</div>
+                <div style={{ fontSize: 24, fontWeight: 900, fontFamily: "'Playfair Display', serif", color: "#e8d5b0" }}>
+                  {cut.internalTemp ? `${cut.internalTemp.min}–${cut.internalTemp.max}°C` : "Visual cue"}
+                </div>
+              </div>
+              <div className="stat-box">
+                <div style={{ fontSize: 9, color: "#363636", letterSpacing: "0.15em", marginBottom: 5 }}>REST TIME</div>
+                <div style={{ fontSize: 15, fontWeight: 600, fontFamily: "'Crimson Pro', serif", color: "#e8d5b0", marginTop: 4 }}>{cut.restTime}</div>
+              </div>
+              <div className="stat-box">
+                <div style={{ fontSize: 9, color: "#363636", letterSpacing: "0.15em", marginBottom: 5 }}>TIME GUIDE</div>
+                <div style={{ fontSize: 14, fontWeight: 600, fontFamily: "'Crimson Pro', serif", color: "#c8a87a", marginTop: 4 }}>{cut.timeGuide}</div>
+              </div>
+            </div>
+
+            {/* Doneness */}
+            {cut.doneness && (
+              <div style={{ marginBottom: 16 }}>
+                <div style={{ fontSize: 9, color: "#363636", letterSpacing: "0.15em", marginBottom: 9 }}>DONENESS OPTIONS</div>
+                <div style={{ display: "flex", gap: 7, flexWrap: "wrap" }}>
+                  {cut.doneness.map(d => (
+                    <span key={d} className="doneness-pill" style={{ color: donenessTemps[d].color, borderColor: donenessTemps[d].color + "44" }}>
+                      {donenessTemps[d].label} — {donenessTemps[d].temp}°C
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            <div className="smoke-line" />
+
+            {/* Notes */}
+            <div style={{ marginBottom: 20 }}>
+              <div style={{ fontSize: 9, color: "#363636", letterSpacing: "0.15em", marginBottom: 8 }}>PITMASTER NOTES</div>
+              <p style={{ fontFamily: "'Crimson Pro', serif", fontSize: 15, color: "#a08058", lineHeight: 1.75, borderLeft: `2px solid ${accentColor}44`, paddingLeft: 14 }}>
+                {cut.notes}
+              </p>
+            </div>
+
+            {/* Inputs */}
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14 }}>
+              {cut.minHrsPerKg && (
+                <div>
+                  <label style={{ fontSize: 9, color: "#363636", letterSpacing: "0.15em", display: "block", marginBottom: 7 }}>WEIGHT (KG) — TIMER ESTIMATE</label>
+                  <input className="temp-input" style={{ "--accent": accentColor }} type="number" placeholder="e.g. 2.5" value={weight} onChange={e => setWeight(e.target.value)} min="0.1" max="25" step="0.1" />
+                </div>
+              )}
+              {cut.internalTemp && (
+                <div style={!cut.minHrsPerKg ? { gridColumn: "1 / -1", maxWidth: 260 } : {}}>
+                  <label style={{ fontSize: 9, color: "#363636", letterSpacing: "0.15em", display: "block", marginBottom: 7 }}>PROBE TEMP (°C)</label>
+                  <input className="temp-input" style={{ "--accent": accentColor }} type="number" placeholder="e.g. 62" value={currentTemp} onChange={e => setCurrentTemp(e.target.value)} min="0" max="120" />
+                  {tempStatus && (
+                    <div style={{ marginTop: 8 }}>
+                      <TempGauge value={Number(currentTemp)} min={40} max={cut.internalTemp.max + 10} color={tempStatus.color} />
+                      <div style={{ fontFamily: "'Crimson Pro', serif", fontSize: 13, color: tempStatus.color, marginTop: 5 }}>{tempStatus.label}</div>
+                      <div style={{ fontFamily: "'Crimson Pro', serif", fontSize: 11, color: "#333", marginTop: 2 }}>Target: {cut.internalTemp.min}–{cut.internalTemp.max}°C</div>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+
+            <CookTimer cut={cut} weight={weight} accentColor={accentColor} />
+          </div>
+        )}
+
+        <div style={{ textAlign: "center", marginTop: 40, fontFamily: "'Crimson Pro', serif", fontSize: 11, color: "#242424", lineHeight: 2.3 }}>
+          All temperatures in Celsius · Times are guides — always cook to internal temp<br />
+          Rest your meat. Always rest your meat.
+        </div>
+      </div>
+    </div>
+  );
+}
