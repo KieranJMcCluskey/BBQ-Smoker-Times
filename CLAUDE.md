@@ -37,6 +37,36 @@ check by rendering `index.html` (headless Chrome screenshot) after edits.
   labels `#a89372`, notes `#d3b98d`, time guide `#dcc79c` (all brightened
   July 2026 — the old label grey `#363636` was near-invisible).
 
+## Celsius / Fahrenheit (added Sep 2026)
+
+**All temperature DATA stays Celsius. Fahrenheit is a display conversion
+only** — cook logic, `TempGauge` bounds and pull-temp comparisons all run in
+Celsius, so there is one place a unit bug can live: the helpers next to
+`donenessTemps` (`toF` / `toC` / `dispTemp` / `tempStr` / `rangeStr` /
+`convertNotes`). Never store a Fahrenheit number in `smokerCuts`/`bbqCuts`.
+
+- `UnitToggle` sits under `ModeToggle`; state lives in `BBQApp` as `unit`,
+  persisted to `localStorage` under **`fs_unit`** (try/catch — a blocked store
+  falls back gracefully).
+- First run with nothing stored calls `localeDefaultUnit()`, which needs an
+  **explicit** region on `navigator.language`/`languages`. Deliberately does
+  NOT use `Intl.Locale.maximize()`: that expands a bare `"en"` to `"US"`, and
+  some Android WebViews report exactly `"en"` — which would hand Fahrenheit to
+  an Australian. No region ⇒ Celsius. `FAHRENHEIT_REGIONS` covers US/LR/MM
+  plus US territories and the Caribbean/Pacific Fahrenheit states.
+- The probe box is in display units; `probeC` is the single conversion point
+  back to Celsius. Switching units converts a value already typed rather than
+  reinterpreting it (62°C is 144°F, not 62°F).
+
+### ⚠ Adding or editing a `notes` string
+
+`convertNotes()` rewrites inline temps in the notes with the regex
+`/(\d+)(?:–(\d+))?°C/g`, so "wrap at 74°C" and "the stall (65–75°C)" convert.
+**It cannot tell a temperature from a temperature DIFFERENCE.** A note saying
+"pull 5°C below target" would render as "41°F below target" when the correct
+answer is 9°F. One note (Ribeye, smoker) already hit this and was reworded to
+"a few degrees". Write deltas in words, never as `N°C`.
+
 ## Builds
 
 ```
