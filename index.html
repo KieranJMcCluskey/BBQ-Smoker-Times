@@ -25,7 +25,7 @@
         { name: "Short Ribs", emoji: "🦴", cookTemp: 120, internalTemp: { min: 93, max: 98 }, restTime: "30–45 min", timeGuide: "1.5 hrs/kg", minHrsPerKg: 1.5, maxHrsPerKg: 1.5, notes: "Probe should slide in like warm butter when done." },
         { name: "Chuck Roast", emoji: "🥩", cookTemp: 110, internalTemp: { min: 90, max: 95 }, restTime: "45–60 min", timeGuide: "1.5 hrs/kg", minHrsPerKg: 1.5, maxHrsPerKg: 1.5, notes: "Great pulled beef. Wrap at 71°C to push through the stall." },
         { name: "Tri-Tip", emoji: "🥩", cookTemp: 120, internalTemp: { min: 57, max: 63 }, restTime: "15–20 min", timeGuide: "45–60 min/kg", minHrsPerKg: 0.75, maxHrsPerKg: 1, notes: "Reverse sear finish for best crust. Rest is critical.", doneness: ["rare", "medium-rare", "medium"] },
-        { name: "Ribeye (whole)", emoji: "🥩", cookTemp: 107, internalTemp: { min: 52, max: 60 }, restTime: "20–30 min", timeGuide: "30–45 min/kg", minHrsPerKg: 0.5, maxHrsPerKg: 0.75, notes: "Smoke low, sear hot. Pull 5°C below target — carry-over does the rest.", doneness: ["rare", "medium-rare", "medium"] },
+        { name: "Ribeye (whole)", emoji: "🥩", cookTemp: 107, internalTemp: { min: 52, max: 60 }, restTime: "20–30 min", timeGuide: "30–45 min/kg", minHrsPerKg: 0.5, maxHrsPerKg: 0.75, notes: "Smoke low, sear hot. Pull a few degrees below target — carry-over does the rest.", doneness: ["rare", "medium-rare", "medium"] },
         { name: "NY Strip (reverse sear)", emoji: "🥩", cookTemp: 107, internalTemp: { min: 49, max: 54 }, restTime: "10 min", timeGuide: "40–55 min/kg", minHrsPerKg: 0.67, maxHrsPerKg: 0.92, notes: "Smoke to ~49°C, then sear hard 45–60 sec a side over full heat. Edge-to-edge pink under a crust. Render the fat strip during the sear.", doneness: ["rare", "medium-rare", "medium"] },
         { name: "Filet Mignon (reverse sear)", emoji: "🥩", cookTemp: 107, internalTemp: { min: 49, max: 54 }, restTime: "10 min", timeGuide: "35–50 min/kg", minHrsPerKg: 0.58, maxHrsPerKg: 0.83, notes: "The kindest way to cook this lean cut — gentle smoke keeps it evenly pink, a fast sear adds the crust it can't build low and slow.", doneness: ["rare", "medium-rare", "medium"] },
         { name: "Porterhouse (reverse sear)", emoji: "🥩", cookTemp: 107, internalTemp: { min: 49, max: 54 }, restTime: "10–15 min", timeGuide: "45–60 min/kg", minHrsPerKg: 0.75, maxHrsPerKg: 1, notes: "Keep the filet side off the hottest zone so both muscles land together. Pull at 49°C, then sear both faces and the bone edge.", doneness: ["rare", "medium-rare", "medium"] },
@@ -146,6 +146,20 @@
       medium: { label: "Medium", temp: 63, color: "#f39c12" },
       well: { label: "Well Done", temp: 74, color: "#7f8c8d" },
     };
+
+    // Every temperature in the data above is Celsius. Fahrenheit is a DISPLAY
+    // conversion only — the cook logic, gauges and comparisons all stay in
+    // Celsius, so there is exactly one place a unit bug can live: here.
+    const toF = c => Math.round(c * 9 / 5 + 32);
+    const toC = f => (f - 32) * 5 / 9;
+    const dispTemp = (c, unit) => unit === "F" ? toF(c) : Math.round(c);
+    const tempStr  = (c, unit) => `${dispTemp(c, unit)}°${unit}`;
+    const rangeStr = (lo, hi, unit) => `${dispTemp(lo, unit)}–${dispTemp(hi, unit)}°${unit}`;
+    // The pitmaster notes carry inline temps ("wrap at 74°C", "the stall
+    // (65–75°C)"). Without this a Fahrenheit user reads Celsius advice.
+    const convertNotes = (text, unit) => unit === "C" ? text
+      : text.replace(/(\d+)(?:–(\d+))?°C/g,
+          (m, a, b) => b ? `${toF(+a)}–${toF(+b)}°F` : `${toF(+a)}°F`);
 
     function formatTimer(secs) {
       const h = Math.floor(secs / 3600);
@@ -276,8 +290,35 @@
       );
     }
 
+    function UnitToggle({ unit, onChange }) {
+      return (
+        <div style={{ display: "flex", justifyContent: "center", marginTop: -22, marginBottom: 26 }}>
+          <div style={{ position: "relative", display: "flex", background: "#0e0e0e", border: "1px solid #252525", borderRadius: 40, padding: 3, userSelect: "none" }}>
+            <div style={{
+              position: "absolute", top: 3, bottom: 3,
+              left: unit === "F" ? "50%" : 3,
+              right: unit === "F" ? 3 : "50%",
+              background: "#5a4632", borderRadius: 36,
+              transition: "left 0.3s cubic-bezier(.4,0,.2,1), right 0.3s cubic-bezier(.4,0,.2,1)",
+              zIndex: 0,
+            }} />
+            {["C", "F"].map(u => (
+              <button key={u} onClick={() => onChange(u)} aria-pressed={unit === u}
+                aria-label={u === "C" ? "Show temperatures in Celsius" : "Show temperatures in Fahrenheit"}
+                style={{ position: "relative", zIndex: 1, background: "none", border: "none", cursor: "pointer", padding: "6px 22px", borderRadius: 36, minWidth: 64, transition: "color 0.25s" }}>
+                <span style={{ fontFamily: "'Playfair Display', serif", fontSize: 13, fontWeight: 700, color: unit === u ? "#f3e7cb" : "#444", letterSpacing: "0.04em" }}>&deg;{u}</span>
+              </button>
+            ))}
+          </div>
+        </div>
+      );
+    }
+
     function BBQApp() {
       const [mode, setMode] = useState("bbq");
+      const [unit, setUnit] = useState(() => {
+        try { return localStorage.getItem("fs_unit") === "F" ? "F" : "C"; } catch (e) { return "C"; }
+      });
       const [activeCategory, setActiveCategory] = useState("beef");
       const [selectedCut, setSelectedCut] = useState(null);
       const [weight, setWeight] = useState("");
@@ -290,6 +331,25 @@
       const categoryLabels = isSmoker ? smokerCategoryLabels : bbqCategoryLabels;
 
       useEffect(() => { setActiveCategory("beef"); setSelectedCut(null); setWeight(""); setCurrentTemp(""); }, [mode]);
+
+      useEffect(() => { try { localStorage.setItem("fs_unit", unit); } catch (e) {} }, [unit]);
+
+      // Switching units mid-cook must not silently reinterpret the number the
+      // user already typed: 62 in Celsius is 144 in Fahrenheit, not 62.
+      const changeUnit = (next) => {
+        if (next === unit) return;
+        setCurrentTemp(prev => {
+          if (prev === "" || isNaN(Number(prev))) return prev;
+          const c = unit === "F" ? toC(Number(prev)) : Number(prev);
+          return String(next === "F" ? toF(c) : Math.round(c));
+        });
+        setUnit(next);
+      };
+
+      // One conversion point: the probe box is in display units, everything
+      // downstream compares in Celsius.
+      const probeC = currentTemp === "" || isNaN(Number(currentTemp)) ? null
+        : (unit === "F" ? toC(Number(currentTemp)) : Number(currentTemp));
 
       useEffect(() => {
         setEmbers(Array.from({ length: 22 }, (_, i) => ({
@@ -305,12 +365,12 @@
       const cut = selectedCut;
       const accentColor = categoryColors[activeCategory] || "#c0392b";
 
-      const tempStatus = cut && cut.internalTemp && currentTemp
-        ? Number(currentTemp) >= cut.internalTemp.max
+      const tempStatus = cut && cut.internalTemp && probeC !== null
+        ? probeC >= cut.internalTemp.max
           ? { label: "✓ Pull it now!", color: "#2ecc71" }
-          : Number(currentTemp) >= cut.internalTemp.min
+          : probeC >= cut.internalTemp.min
           ? { label: "In the zone — nearly there", color: "#f39c12" }
-          : Number(currentTemp) >= cut.internalTemp.min - 10
+          : probeC >= cut.internalTemp.min - 10
           ? { label: "Getting close", color: "#e67e22" }
           : { label: isSmoker ? "Keep smoking" : "Keep grilling", color: "#c0392b" }
         : null;
@@ -361,6 +421,8 @@
 
             <ModeToggle mode={mode} onChange={(m) => setMode(m)} />
 
+            <UnitToggle unit={unit} onChange={changeUnit} />
+
             <div style={{ display: "flex", gap: 6, flexWrap: "wrap", justifyContent: "center", marginBottom: 22 }}>
               {Object.keys(cuts).map(cat => (
                 <button key={cat} className={`cat-btn${activeCategory === cat ? " active" : ""}`}
@@ -373,7 +435,9 @@
 
             <div style={{ textAlign: "center", marginBottom: 18 }}>
               <span style={{ fontFamily: "'Crimson Pro', serif", fontSize: 12, color: "#383838", letterSpacing: "0.1em" }}>
-                {isSmoker ? "🌡 LOW & SLOW · 100–165°C smoker · Hours of cook time" : "🔥 HIGH HEAT · 180–250°C grill · Minutes of cook time"}
+                {isSmoker
+                  ? `🌡 LOW & SLOW · ${rangeStr(100, 165, unit)} smoker · Hours of cook time`
+                  : `🔥 HIGH HEAT · ${rangeStr(180, 250, unit)} grill · Minutes of cook time`}
               </span>
             </div>
 
@@ -387,12 +451,12 @@
                   <div style={{ display: "flex", gap: 16 }}>
                     <div>
                       <div style={{ fontSize: 9, color: "#a89372", letterSpacing: "0.12em", marginBottom: 2 }}>{isSmoker ? "SMOKER" : "GRILL"}</div>
-                      <div style={{ fontSize: 17, fontWeight: 700, color: accentColor, fontFamily: "'Playfair Display', serif" }}>{c.cookTemp}°</div>
+                      <div style={{ fontSize: 17, fontWeight: 700, color: accentColor, fontFamily: "'Playfair Display', serif" }}>{dispTemp(c.cookTemp, unit)}°</div>
                     </div>
                     <div>
                       <div style={{ fontSize: 9, color: "#a89372", letterSpacing: "0.12em", marginBottom: 2 }}>TARGET</div>
                       <div style={{ fontSize: 17, fontWeight: 700, color: "#f3e7cb", fontFamily: "'Playfair Display', serif" }}>
-                        {c.internalTemp ? `${c.internalTemp.min}–${c.internalTemp.max}°` : "Visual"}
+                        {c.internalTemp ? `${dispTemp(c.internalTemp.min, unit)}–${dispTemp(c.internalTemp.max, unit)}°` : "Visual"}
                       </div>
                     </div>
                   </div>
@@ -414,12 +478,12 @@
                 <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(120px, 1fr))", gap: 8, marginBottom: 18 }}>
                   <div className="stat-box">
                     <div style={{ fontSize: 9, color: "#a89372", letterSpacing: "0.15em", marginBottom: 5 }}>{cookTempLabel}</div>
-                    <div style={{ fontSize: 26, fontWeight: 900, fontFamily: "'Playfair Display', serif", color: accentColor }}>{cut.cookTemp}°C</div>
+                    <div style={{ fontSize: 26, fontWeight: 900, fontFamily: "'Playfair Display', serif", color: accentColor }}>{tempStr(cut.cookTemp, unit)}</div>
                   </div>
                   <div className="stat-box">
                     <div style={{ fontSize: 9, color: "#a89372", letterSpacing: "0.15em", marginBottom: 5 }}>PULL TEMP</div>
-                    <div style={{ fontSize: 24, fontWeight: 900, fontFamily: "'Playfair Display', serif", color: "#f3e7cb" }}>
-                      {cut.internalTemp ? `${cut.internalTemp.min}–${cut.internalTemp.max}°C` : "Visual cue"}
+                    <div style={{ fontSize: unit === "F" ? 21 : 24, fontWeight: 900, fontFamily: "'Playfair Display', serif", color: "#f3e7cb" }}>
+                      {cut.internalTemp ? rangeStr(cut.internalTemp.min, cut.internalTemp.max, unit) : "Visual cue"}
                     </div>
                   </div>
                   <div className="stat-box">
@@ -438,7 +502,7 @@
                     <div style={{ display: "flex", gap: 7, flexWrap: "wrap" }}>
                       {cut.doneness.map(d => (
                         <span key={d} className="doneness-pill" style={{ color: donenessTemps[d].color, borderColor: donenessTemps[d].color + "44" }}>
-                          {donenessTemps[d].label} — {donenessTemps[d].temp}°C
+                          {donenessTemps[d].label} — {tempStr(donenessTemps[d].temp, unit)}
                         </span>
                       ))}
                     </div>
@@ -450,7 +514,7 @@
                 <div style={{ marginBottom: 20 }}>
                   <div style={{ fontSize: 9, color: "#a89372", letterSpacing: "0.15em", marginBottom: 8 }}>PITMASTER NOTES</div>
                   <p style={{ fontFamily: "'Crimson Pro', serif", fontSize: 15, color: "#d3b98d", lineHeight: 1.75, borderLeft: `2px solid ${accentColor}44`, paddingLeft: 14 }}>
-                    {cut.notes}
+                    {convertNotes(cut.notes, unit)}
                   </p>
                 </div>
 
@@ -463,13 +527,13 @@
                   )}
                   {cut.internalTemp && (
                     <div style={!cut.minHrsPerKg ? { gridColumn: "1 / -1", maxWidth: 260 } : {}}>
-                      <label style={{ fontSize: 9, color: "#a89372", letterSpacing: "0.15em", display: "block", marginBottom: 7 }}>PROBE TEMP (°C)</label>
-                      <input className="temp-input" style={{ "--accent": accentColor }} type="number" placeholder="e.g. 62" value={currentTemp} onChange={e => setCurrentTemp(e.target.value)} min="0" max="120" />
+                      <label style={{ fontSize: 9, color: "#a89372", letterSpacing: "0.15em", display: "block", marginBottom: 7 }}>PROBE TEMP (°{unit})</label>
+                      <input className="temp-input" style={{ "--accent": accentColor }} type="number" placeholder={unit === "F" ? "e.g. 144" : "e.g. 62"} value={currentTemp} onChange={e => setCurrentTemp(e.target.value)} min="0" max={unit === "F" ? 250 : 120} />
                       {tempStatus && (
                         <div style={{ marginTop: 8 }}>
-                          <TempGauge value={Number(currentTemp)} min={40} max={cut.internalTemp.max + 10} color={tempStatus.color} />
+                          <TempGauge value={probeC} min={40} max={cut.internalTemp.max + 10} color={tempStatus.color} />
                           <div style={{ fontFamily: "'Crimson Pro', serif", fontSize: 13, color: tempStatus.color, marginTop: 5 }}>{tempStatus.label}</div>
-                          <div style={{ fontFamily: "'Crimson Pro', serif", fontSize: 11, color: "#333", marginTop: 2 }}>Target: {cut.internalTemp.min}–{cut.internalTemp.max}°C</div>
+                          <div style={{ fontFamily: "'Crimson Pro', serif", fontSize: 11, color: "#333", marginTop: 2 }}>Target: {rangeStr(cut.internalTemp.min, cut.internalTemp.max, unit)}</div>
                         </div>
                       )}
                     </div>
@@ -481,7 +545,7 @@
             )}
 
             <div style={{ textAlign: "center", marginTop: 40, fontFamily: "'Crimson Pro', serif", fontSize: 11, color: "#242424", lineHeight: 2.3 }}>
-              All temperatures in Celsius · Times are guides — always cook to internal temp<br />
+              All temperatures in {unit === "F" ? "Fahrenheit" : "Celsius"} · Times are guides — always cook to internal temp<br />
               Rest your meat. Always rest your meat.
             </div>
           </div>
