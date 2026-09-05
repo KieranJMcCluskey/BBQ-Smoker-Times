@@ -161,6 +161,31 @@
       : text.replace(/(\d+)(?:–(\d+))?°C/g,
           (m, a, b) => b ? `${toF(+a)}–${toF(+b)}°F` : `${toF(+a)}°F`);
 
+    // First run only: guess the unit from the device region, so a US pitmaster
+    // is not met with a wall of Celsius. Anything the user picks is stored and
+    // wins from then on. Region beats language - en-AU and en-GB are Celsius.
+    const FAHRENHEIT_REGIONS = new Set([
+      "US", "LR", "MM",                                     // the three holdouts
+      "BS", "BZ", "KY", "PW", "FM", "MH",                   // + Caribbean / Pacific
+      "PR", "GU", "VI", "AS", "MP",                         // + US territories
+    ]);
+    function localeDefaultUnit() {
+      try {
+        // Only an EXPLICIT region counts. Intl's maximize() turns a bare "en"
+        // into "US", and some Android WebViews report exactly that - which
+        // would hand Fahrenheit to an Australian. Celsius is the safer miss.
+        const tags = [navigator.language].concat(navigator.languages || []);
+        for (const tag of tags) {
+          if (!tag) continue;
+          let region = "";
+          try { region = new Intl.Locale(tag).region || ""; }
+          catch (e) { const m = String(tag).match(/[-_]([A-Za-z]{2})(?:[-_]|$)/); region = m ? m[1] : ""; }
+          if (region) return FAHRENHEIT_REGIONS.has(region.toUpperCase()) ? "F" : "C";
+        }
+      } catch (e) {}
+      return "C";
+    }
+
     function formatTimer(secs) {
       const h = Math.floor(secs / 3600);
       const m = Math.floor((secs % 3600) / 60);
@@ -317,7 +342,11 @@
     function BBQApp() {
       const [mode, setMode] = useState("bbq");
       const [unit, setUnit] = useState(() => {
-        try { return localStorage.getItem("fs_unit") === "F" ? "F" : "C"; } catch (e) { return "C"; }
+        try {
+          const saved = localStorage.getItem("fs_unit");
+          if (saved === "F" || saved === "C") return saved;   // an explicit choice always wins
+        } catch (e) {}
+        return localeDefaultUnit();
       });
       const [activeCategory, setActiveCategory] = useState("beef");
       const [selectedCut, setSelectedCut] = useState(null);
