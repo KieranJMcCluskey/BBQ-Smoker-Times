@@ -1,7 +1,15 @@
 # Fire & Smoke — store listing copy
 
 App name (both stores): **Fire & Smoke**
-Android package: `com.sugarolly.bbqsmokertimes`   ·   iOS bundle id: TBC (register under the org team first)
+Android package: `com.sugarolly.bbqsmokertimes`
+iOS bundle id: `com.sugarolly.bbqsmokertimes` (same) — register the App ID in the
+developer portal under the Sugarolly org team **before** opening Xcode, never the
+Personal Team. Distribution profile must be named exactly **`FireSmoke App Store`**
+(no ampersand — the portal mangles punctuation, and the name is hardcoded in both
+build configs).
+
+No in-app purchases, so there is **no IAP review screenshot and no promotional
+image** to supply — the two fields that caused trouble on the games do not apply.
 
 ## App title (max 30 chars — currently 12)
 Fire & Smoke
