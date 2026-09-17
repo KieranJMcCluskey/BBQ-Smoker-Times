@@ -47,3 +47,41 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
     }
 
 }
+
+// MARK: - UIScene lifecycle
+//
+// iOS 27 requires scene lifecycle adoption: an app built against that SDK
+// fails to launch without it (EXC_BREAKPOINT in
+// __UIApplicationEvaluateRuntimeIssueForNoSceneLifecycleAdoption), which is
+// what Apple's reviewer hit. Two things are needed, and only doing the first
+// trades the crash for a blank screen:
+//   1. UIApplicationSceneManifest in Info.plist naming this class, and
+//   2. a delegate that actually creates the window - under the scene
+//      lifecycle UIMainStoryboardFile is ignored and nobody builds it for us.
+// Capacitor 8.5's CAPSceneDelegateProxy handles URL and universal-link
+// delivery, so forward the relevant callbacks to it rather than reimplementing
+// them.
+class SceneDelegate: UIResponder, UIWindowSceneDelegate {
+    var window: UIWindow?
+
+    func scene(_ scene: UIScene,
+               willConnectTo session: UISceneSession,
+               options connectionOptions: UIScene.ConnectionOptions) {
+        guard let windowScene = scene as? UIWindowScene else { return }
+        let window = UIWindow(windowScene: windowScene)
+        window.rootViewController = UIStoryboard(name: "Main", bundle: nil)
+            .instantiateInitialViewController()
+        self.window = window
+        window.makeKeyAndVisible()
+
+        SceneDelegateProxy.shared.scene(scene, willConnectTo: session, options: connectionOptions)
+    }
+
+    func scene(_ scene: UIScene, openURLContexts URLContexts: Set<UIOpenURLContext>) {
+        SceneDelegateProxy.shared.scene(scene, openURLContexts: URLContexts)
+    }
+
+    func scene(_ scene: UIScene, continue userActivity: NSUserActivity) {
+        SceneDelegateProxy.shared.scene(scene, continue: userActivity)
+    }
+}
