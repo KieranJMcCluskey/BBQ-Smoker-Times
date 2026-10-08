@@ -273,7 +273,7 @@
 
       return (
         <div style={{ background: "#0a0a0a", border: `1px solid ${accentColor}2a`, borderRadius: 3, padding: "18px 20px", marginTop: 14 }}>
-          <div style={{ fontSize: 9, color: "#484848", letterSpacing: "0.22em", marginBottom: 12 }}>⏱ COOK TIMER</div>
+          <div style={{ fontSize: 9, color: "#9a948a", letterSpacing: "0.22em", marginBottom: 12 }}>⏱ COOK TIMER</div>
           {!timerSecs ? (
             <div>
               <div style={{ marginBottom: 10 }}>
@@ -282,7 +282,7 @@
                     ▶ Start — {formatTimer(estimated)} estimated
                   </button>
                 ) : (
-                  <div style={{ fontFamily: "'Crimson Pro', serif", fontSize: 13, color: "#383838" }}>
+                  <div style={{ fontFamily: "'Crimson Pro', serif", fontSize: 13, color: "#9a948a" }}>
                     {cut.minHrsPerKg ? "Enter weight above for auto-estimate" : "Set a custom time below"}
                   </div>
                 )}
@@ -292,7 +292,7 @@
                   style={{ background: "#141414", border: "1px solid #222", color: "#f3e7cb", padding: "8px 11px", fontFamily: "'Crimson Pro', serif", fontSize: 14, width: 185, borderRadius: 2, outline: "none" }}
                   min="0.05" max="24" step="0.05" />
                 <button onClick={() => { if (customHrs && parseFloat(customHrs) > 0) startTimer(Math.round(parseFloat(customHrs) * 3600)); }}
-                  style={{ background: "#1a1a1a", border: "1px solid #2a2a2a", color: "#777", padding: "8px 14px", fontFamily: "'Crimson Pro', serif", fontSize: 13, cursor: "pointer", borderRadius: 2 }}>
+                  style={{ background: "#1a1a1a", border: "1px solid #2a2a2a", color: "#a39c91", padding: "8px 14px", fontFamily: "'Crimson Pro', serif", fontSize: 13, cursor: "pointer", borderRadius: 2 }}>
                   Set Custom
                 </button>
               </div>
@@ -303,15 +303,15 @@
                 <div style={{ fontFamily: "'Playfair Display', serif", fontSize: done ? 32 : 50, fontWeight: 900, color: done ? "#2ecc71" : running ? accentColor : "#777", letterSpacing: "-0.02em", lineHeight: 1, transition: "color 0.4s", textShadow: done ? "0 0 24px #2ecc7155" : running ? `0 0 24px ${accentColor}44` : "none" }}>
                   {done ? "✓ TIME'S UP" : formatTimer(remaining)}
                 </div>
-                {!done && <div style={{ fontFamily: "'Crimson Pro', serif", fontSize: 12, color: "#333" }}>/ {formatTimer(total)}</div>}
+                {!done && <div style={{ fontFamily: "'Crimson Pro', serif", fontSize: 12, color: "#9a948a" }}>/ {formatTimer(total)}</div>}
               </div>
               <div style={{ position: "relative", height: 6, background: "#1a1a1a", borderRadius: 4, overflow: "hidden", marginBottom: 12 }}>
                 <div style={{ position: "absolute", left: 0, top: 0, height: "100%", width: `${pct}%`, background: done ? "linear-gradient(90deg,#27ae60,#2ecc71)" : `linear-gradient(90deg,${accentColor}77,${accentColor})`, borderRadius: 4, transition: "width 1s linear", boxShadow: done ? "0 0 12px #2ecc7166" : `0 0 12px ${accentColor}55` }} />
               </div>
-              <div style={{ fontFamily: "'Crimson Pro', serif", fontSize: 12, color: "#333", marginBottom: 12 }}>{formatTimer(elapsed)} elapsed · {Math.round(pct)}% through</div>
+              <div style={{ fontFamily: "'Crimson Pro', serif", fontSize: 12, color: "#9a948a", marginBottom: 12 }}>{formatTimer(elapsed)} elapsed · {Math.round(pct)}% through</div>
               <div style={{ display: "flex", gap: 8 }}>
                 {!done && <button onClick={() => setRunning(r => !r)} style={{ background: running ? "#181818" : accentColor, border: `1px solid ${running ? "#2a2a2a" : accentColor}`, color: running ? "#777" : "#0d0d0d", padding: "8px 18px", fontFamily: "'Crimson Pro', serif", fontSize: 13, fontWeight: 700, cursor: "pointer", borderRadius: 2 }}>{running ? "⏸ Pause" : "▶ Resume"}</button>}
-                <button onClick={reset} style={{ background: "none", border: "1px solid #1e1e1e", color: "#444", padding: "8px 14px", fontFamily: "'Crimson Pro', serif", fontSize: 13, cursor: "pointer", borderRadius: 2 }}>↺ Reset</button>
+                <button onClick={reset} style={{ background: "none", border: "1px solid #1e1e1e", color: "#a39c91", padding: "8px 14px", fontFamily: "'Crimson Pro', serif", fontSize: 13, cursor: "pointer", borderRadius: 2 }}>↺ Reset</button>
               </div>
               {done && <div style={{ marginTop: 14, fontFamily: "'Crimson Pro', serif", fontSize: 14, color: "#dcc79c", borderLeft: `2px solid ${accentColor}55`, paddingLeft: 12, lineHeight: 1.6 }}>Done — rest for {cut.restTime} before slicing.</div>}
             </div>
@@ -341,8 +341,8 @@
             ].map(opt => (
               <button key={opt.id} onClick={() => onChange(opt.id)}
                 style={{ position: "relative", zIndex: 1, background: "none", border: "none", cursor: "pointer", padding: "10px 28px", borderRadius: 36, textAlign: "center", minWidth: 150, transition: "color 0.25s" }}>
-                <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 15, fontWeight: 700, color: mode === opt.id ? "#fff" : "#444", transition: "color 0.25s", letterSpacing: "0.01em" }}>{opt.label}</div>
-                <div style={{ fontFamily: "'Crimson Pro', serif", fontSize: 11, color: mode === opt.id ? "#ffffff99" : "#2e2e2e", transition: "color 0.25s", letterSpacing: "0.08em", marginTop: 1 }}>{opt.sub}</div>
+                <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 15, fontWeight: 700, color: mode === opt.id ? "#fff" : "#a39c91", transition: "color 0.25s", letterSpacing: "0.01em" }}>{opt.label}</div>
+                <div style={{ fontFamily: "'Crimson Pro', serif", fontSize: 11, color: mode === opt.id ? "#ffffffcc" : "#948e84", transition: "color 0.25s", letterSpacing: "0.08em", marginTop: 1 }}>{opt.sub}</div>
               </button>
             ))}
           </div>
@@ -366,7 +366,7 @@
               <button key={u} onClick={() => onChange(u)} aria-pressed={unit === u}
                 aria-label={u === "C" ? "Show temperatures in Celsius" : "Show temperatures in Fahrenheit"}
                 style={{ position: "relative", zIndex: 1, background: "none", border: "none", cursor: "pointer", padding: "6px 22px", borderRadius: 36, minWidth: 64, transition: "color 0.25s" }}>
-                <span style={{ fontFamily: "'Playfair Display', serif", fontSize: 13, fontWeight: 700, color: unit === u ? "#f3e7cb" : "#444", letterSpacing: "0.04em" }}>&deg;{u}</span>
+                <span style={{ fontFamily: "'Playfair Display', serif", fontSize: 13, fontWeight: 700, color: unit === u ? "#f3e7cb" : "#a39c91", letterSpacing: "0.04em" }}>&deg;{u}</span>
               </button>
             ))}
           </div>
@@ -385,6 +385,7 @@
       });
       const [activeCategory, setActiveCategory] = useState("beef");
       const [selectedCut, setSelectedCut] = useState(null);
+      const detailRef = useRef(null);
       const [weight, setWeight] = useState("");
       const [currentTemp, setCurrentTemp] = useState("");
       const [embers, setEmbers] = useState([]);
@@ -395,6 +396,17 @@
       const categoryLabels = isSmoker ? smokerCategoryLabels : bbqCategoryLabels;
 
       useEffect(() => { setActiveCategory("beef"); setSelectedCut(null); setWeight(""); setCurrentTemp(""); }, [mode]);
+
+      /* Jump to the cut you just picked. The detail panel renders below the
+         whole grid, which runs several screens on a phone, so choosing a cut
+         used to leave its numbers off-screen with no sign anything happened.
+         Honours reduced-motion: the jump still happens, it just does not
+         animate. */
+      useEffect(() => {
+        if (!selectedCut || !detailRef.current) return;
+        const smooth = !window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        detailRef.current.scrollIntoView({ behavior: smooth ? 'smooth' : 'auto', block: 'start' });
+      }, [selectedCut]);
 
       useEffect(() => { try { localStorage.setItem("fs_unit", unit); } catch (e) {} }, [unit]);
 
@@ -448,7 +460,7 @@
             *{box-sizing:border-box;margin:0;padding:0}
             .ember{position:fixed;bottom:-10px;border-radius:50%;background:radial-gradient(circle,#ff6b00,#ff3300 60%,transparent);animation:rise linear infinite;pointer-events:none;filter:blur(1px);z-index:0}
             @keyframes rise{0%{transform:translateY(0) scale(1);opacity:var(--op)}60%{transform:translateY(-55vh) translateX(15px) scale(0.7)}100%{transform:translateY(-100vh) translateX(-8px) scale(0.1);opacity:0}}
-            .cat-btn{background:none;border:1px solid #1e1e1e;color:#484848;padding:7px 13px;cursor:pointer;font-family:'Crimson Pro',serif;font-size:13px;letter-spacing:.04em;transition:all .2s;border-radius:2px;white-space:nowrap}
+            .cat-btn{background:none;border:1px solid #1e1e1e;color:#a39c91;padding:7px 13px;cursor:pointer;font-family:'Crimson Pro',serif;font-size:13px;letter-spacing:.04em;transition:all .2s;border-radius:2px;white-space:nowrap}
             .cat-btn:hover{color:#f3e7cb;border-color:#2e2e2e}
             .cat-btn.active{font-weight:700;color:#0d0d0d}
             .cut-card{background:#131313;border:1px solid #1c1c1c;padding:14px 16px;cursor:pointer;transition:all .2s;border-radius:3px;position:relative;overflow:hidden}
@@ -460,7 +472,7 @@
             @keyframes slideIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
             .temp-input{background:#0d0d0d;border:1px solid #252525;color:#f3e7cb;padding:10px 13px;font-family:'Crimson Pro',serif;font-size:16px;width:100%;border-radius:2px;outline:none;transition:border-color .2s}
             .temp-input:focus{border-color:var(--accent)}
-            .temp-input::placeholder{color:#2e2e2e}
+            .temp-input::placeholder{color:#8a857c}
             .stat-box{background:#0d0d0d;border:1px solid #181818;border-radius:2px;padding:12px 14px}
             .doneness-pill{padding:5px 12px;border-radius:2px;font-family:'Crimson Pro',serif;font-size:12px;letter-spacing:.04em;border:1px solid currentColor;opacity:.75}
             .smoke-line{height:1px;background:linear-gradient(90deg,transparent,#252525,transparent);margin:18px 0}
@@ -473,7 +485,7 @@
 
           <div style={{ position: "relative", zIndex: 1, maxWidth: 920, margin: "0 auto", padding: "36px 18px 80px" }}>
             <div style={{ textAlign: "center", marginBottom: 32 }}>
-              <div style={{ fontSize: 10, letterSpacing: "0.38em", color: "#333", fontFamily: "'Crimson Pro', serif", marginBottom: 10, textTransform: "uppercase" }}>The Pitmaster's Reference</div>
+              <div style={{ fontSize: 10, letterSpacing: "0.38em", color: "#9a948a", fontFamily: "'Crimson Pro', serif", marginBottom: 10, textTransform: "uppercase" }}>The Pitmaster's Reference</div>
               <h1 style={{ fontFamily: "'Playfair Display', serif", fontSize: "clamp(34px, 8vw, 62px)", fontWeight: 900, letterSpacing: "-0.02em", color: "#f3e7cb", lineHeight: 1, marginBottom: 6 }}>
                 FIRE &amp; SMOKE
               </h1>
@@ -498,7 +510,7 @@
             </div>
 
             <div style={{ textAlign: "center", marginBottom: 18 }}>
-              <span style={{ fontFamily: "'Crimson Pro', serif", fontSize: 12, color: "#383838", letterSpacing: "0.1em" }}>
+              <span style={{ fontFamily: "'Crimson Pro', serif", fontSize: 12, color: "#9a948a", letterSpacing: "0.1em" }}>
                 {isSmoker
                   ? `🌡 LOW & SLOW · ${rangeStr(100, 165, unit)} smoker · Hours of cook time`
                   : `🔥 HIGH HEAT · ${rangeStr(180, 250, unit)} grill · Minutes of cook time`}
@@ -530,7 +542,7 @@
             </div>
 
             {cut && (
-              <div className="detail-panel" style={{ padding: "22px 22px 26px" }}>
+              <div ref={detailRef} className="detail-panel" style={{ padding: "22px 22px 26px", scrollMarginTop: 14 }}>
                 <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", flexWrap: "wrap", gap: 10, marginBottom: 18 }}>
                   <div>
                     <div style={{ fontSize: 9, color: "#a89372", letterSpacing: "0.24em", marginBottom: 5 }}>SELECTED</div>
@@ -597,7 +609,7 @@
                         <div style={{ marginTop: 8 }}>
                           <TempGauge value={probeC} min={40} max={cut.internalTemp.max + 10} color={tempStatus.color} />
                           <div style={{ fontFamily: "'Crimson Pro', serif", fontSize: 13, color: tempStatus.color, marginTop: 5 }}>{tempStatus.label}</div>
-                          <div style={{ fontFamily: "'Crimson Pro', serif", fontSize: 11, color: "#333", marginTop: 2 }}>Target: {rangeStr(cut.internalTemp.min, cut.internalTemp.max, unit)}</div>
+                          <div style={{ fontFamily: "'Crimson Pro', serif", fontSize: 11, color: "#a39c91", marginTop: 2 }}>Target: {rangeStr(cut.internalTemp.min, cut.internalTemp.max, unit)}</div>
                         </div>
                       )}
                     </div>
@@ -608,7 +620,7 @@
               </div>
             )}
 
-            <div style={{ textAlign: "center", marginTop: 40, fontFamily: "'Crimson Pro', serif", fontSize: 11, color: "#242424", lineHeight: 2.3 }}>
+            <div style={{ textAlign: "center", marginTop: 40, fontFamily: "'Crimson Pro', serif", fontSize: 11, color: "#8a857c", lineHeight: 2.3 }}>
               All temperatures in {unit === "F" ? "Fahrenheit" : "Celsius"} · Times are guides — always cook to internal temp<br />
               Rest your meat. Always rest your meat.
             </div>

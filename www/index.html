@@ -1151,7 +1151,7 @@ function CookTimer({
   }, /*#__PURE__*/React.createElement("div", {
     style: {
       fontSize: 9,
-      color: "#484848",
+      color: "#9a948a",
       letterSpacing: "0.22em",
       marginBottom: 12
     }
@@ -1176,7 +1176,7 @@ function CookTimer({
     style: {
       fontFamily: "'Crimson Pro', serif",
       fontSize: 13,
-      color: "#383838"
+      color: "#9a948a"
     }
   }, cut.minHrsPerKg ? "Enter weight above for auto-estimate" : "Set a custom time below")), /*#__PURE__*/React.createElement("div", {
     style: {
@@ -1210,7 +1210,7 @@ function CookTimer({
     style: {
       background: "#1a1a1a",
       border: "1px solid #2a2a2a",
-      color: "#777",
+      color: "#a39c91",
       padding: "8px 14px",
       fontFamily: "'Crimson Pro', serif",
       fontSize: 13,
@@ -1239,7 +1239,7 @@ function CookTimer({
     style: {
       fontFamily: "'Crimson Pro', serif",
       fontSize: 12,
-      color: "#333"
+      color: "#9a948a"
     }
   }, "/ ", formatTimer(total))), /*#__PURE__*/React.createElement("div", {
     style: {
@@ -1266,7 +1266,7 @@ function CookTimer({
     style: {
       fontFamily: "'Crimson Pro', serif",
       fontSize: 12,
-      color: "#333",
+      color: "#9a948a",
       marginBottom: 12
     }
   }, formatTimer(elapsed), " elapsed \xB7 ", Math.round(pct), "% through"), /*#__PURE__*/React.createElement("div", {
@@ -1292,7 +1292,7 @@ function CookTimer({
     style: {
       background: "none",
       border: "1px solid #1e1e1e",
-      color: "#444",
+      color: "#a39c91",
       padding: "8px 14px",
       fontFamily: "'Crimson Pro', serif",
       fontSize: 13,
@@ -1375,7 +1375,7 @@ function ModeToggle({
       fontFamily: "'Playfair Display', serif",
       fontSize: 15,
       fontWeight: 700,
-      color: mode === opt.id ? "#fff" : "#444",
+      color: mode === opt.id ? "#fff" : "#a39c91",
       transition: "color 0.25s",
       letterSpacing: "0.01em"
     }
@@ -1383,7 +1383,7 @@ function ModeToggle({
     style: {
       fontFamily: "'Crimson Pro', serif",
       fontSize: 11,
-      color: mode === opt.id ? "#ffffff99" : "#2e2e2e",
+      color: mode === opt.id ? "#ffffffcc" : "#948e84",
       transition: "color 0.25s",
       letterSpacing: "0.08em",
       marginTop: 1
@@ -1444,7 +1444,7 @@ function UnitToggle({
       fontFamily: "'Playfair Display', serif",
       fontSize: 13,
       fontWeight: 700,
-      color: unit === u ? "#f3e7cb" : "#444",
+      color: unit === u ? "#f3e7cb" : "#a39c91",
       letterSpacing: "0.04em"
     }
   }, "\xB0", u)))));
@@ -1460,6 +1460,7 @@ function BBQApp() {
   });
   const [activeCategory, setActiveCategory] = useState("beef");
   const [selectedCut, setSelectedCut] = useState(null);
+  const detailRef = useRef(null);
   const [weight, setWeight] = useState("");
   const [currentTemp, setCurrentTemp] = useState("");
   const [embers, setEmbers] = useState([]);
@@ -1473,6 +1474,20 @@ function BBQApp() {
     setWeight("");
     setCurrentTemp("");
   }, [mode]);
+
+  /* Jump to the cut you just picked. The detail panel renders below the
+     whole grid, which runs several screens on a phone, so choosing a cut
+     used to leave its numbers off-screen with no sign anything happened.
+     Honours reduced-motion: the jump still happens, it just does not
+     animate. */
+  useEffect(() => {
+    if (!selectedCut || !detailRef.current) return;
+    const smooth = !window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    detailRef.current.scrollIntoView({
+      behavior: smooth ? 'smooth' : 'auto',
+      block: 'start'
+    });
+  }, [selectedCut]);
   useEffect(() => {
     try {
       localStorage.setItem("fs_unit", unit);
@@ -1632,7 +1647,7 @@ function BBQApp() {
             *{box-sizing:border-box;margin:0;padding:0}
             .ember{position:fixed;bottom:-10px;border-radius:50%;background:radial-gradient(circle,#ff6b00,#ff3300 60%,transparent);animation:rise linear infinite;pointer-events:none;filter:blur(1px);z-index:0}
             @keyframes rise{0%{transform:translateY(0) scale(1);opacity:var(--op)}60%{transform:translateY(-55vh) translateX(15px) scale(0.7)}100%{transform:translateY(-100vh) translateX(-8px) scale(0.1);opacity:0}}
-            .cat-btn{background:none;border:1px solid #1e1e1e;color:#484848;padding:7px 13px;cursor:pointer;font-family:'Crimson Pro',serif;font-size:13px;letter-spacing:.04em;transition:all .2s;border-radius:2px;white-space:nowrap}
+            .cat-btn{background:none;border:1px solid #1e1e1e;color:#a39c91;padding:7px 13px;cursor:pointer;font-family:'Crimson Pro',serif;font-size:13px;letter-spacing:.04em;transition:all .2s;border-radius:2px;white-space:nowrap}
             .cat-btn:hover{color:#f3e7cb;border-color:#2e2e2e}
             .cat-btn.active{font-weight:700;color:#0d0d0d}
             .cut-card{background:#131313;border:1px solid #1c1c1c;padding:14px 16px;cursor:pointer;transition:all .2s;border-radius:3px;position:relative;overflow:hidden}
@@ -1644,7 +1659,7 @@ function BBQApp() {
             @keyframes slideIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
             .temp-input{background:#0d0d0d;border:1px solid #252525;color:#f3e7cb;padding:10px 13px;font-family:'Crimson Pro',serif;font-size:16px;width:100%;border-radius:2px;outline:none;transition:border-color .2s}
             .temp-input:focus{border-color:var(--accent)}
-            .temp-input::placeholder{color:#2e2e2e}
+            .temp-input::placeholder{color:#8a857c}
             .stat-box{background:#0d0d0d;border:1px solid #181818;border-radius:2px;padding:12px 14px}
             .doneness-pill{padding:5px 12px;border-radius:2px;font-family:'Crimson Pro',serif;font-size:12px;letter-spacing:.04em;border:1px solid currentColor;opacity:.75}
             .smoke-line{height:1px;background:linear-gradient(90deg,transparent,#252525,transparent);margin:18px 0}
@@ -1677,7 +1692,7 @@ function BBQApp() {
     style: {
       fontSize: 10,
       letterSpacing: "0.38em",
-      color: "#333",
+      color: "#9a948a",
       fontFamily: "'Crimson Pro', serif",
       marginBottom: 10,
       textTransform: "uppercase"
@@ -1743,7 +1758,7 @@ function BBQApp() {
     style: {
       fontFamily: "'Crimson Pro', serif",
       fontSize: 12,
-      color: "#383838",
+      color: "#9a948a",
       letterSpacing: "0.1em"
     }
   }, isSmoker ? `🌡 LOW & SLOW · ${rangeStr(100, 165, unit)} smoker · Hours of cook time` : `🔥 HIGH HEAT · ${rangeStr(180, 250, unit)} grill · Minutes of cook time`)), /*#__PURE__*/React.createElement("div", {
@@ -1822,9 +1837,11 @@ function BBQApp() {
     max: 105,
     color: accentColor
   })))), cut && /*#__PURE__*/React.createElement("div", {
+    ref: detailRef,
     className: "detail-panel",
     style: {
-      padding: "22px 22px 26px"
+      padding: "22px 22px 26px",
+      scrollMarginTop: 14
     }
   }, /*#__PURE__*/React.createElement("div", {
     style: {
@@ -2050,7 +2067,7 @@ function BBQApp() {
     style: {
       fontFamily: "'Crimson Pro', serif",
       fontSize: 11,
-      color: "#333",
+      color: "#a39c91",
       marginTop: 2
     }
   }, "Target: ", rangeStr(cut.internalTemp.min, cut.internalTemp.max, unit))))), /*#__PURE__*/React.createElement(CookTimer, {
@@ -2063,7 +2080,7 @@ function BBQApp() {
       marginTop: 40,
       fontFamily: "'Crimson Pro', serif",
       fontSize: 11,
-      color: "#242424",
+      color: "#8a857c",
       lineHeight: 2.3
     }
   }, "All temperatures in ", unit === "F" ? "Fahrenheit" : "Celsius", " \xB7 Times are guides \u2014 always cook to internal temp", /*#__PURE__*/React.createElement("br", null), "Rest your meat. Always rest your meat.")));
