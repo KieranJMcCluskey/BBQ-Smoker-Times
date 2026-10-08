@@ -18,6 +18,39 @@
   <script type="text/babel" data-presets="react">
     const { useState, useEffect, useRef } = React;
 
+    // ─── RATING PROMPT ──────────────────────────────────────────────────────────
+    // Asked when a cook timer runs out: they have just pulled the meat this app
+    // told them to pull, which is the moment it proved itself. Never on launch
+    // and never while they are only browsing cuts — no value has landed yet.
+    //
+    // Neither store reports whether the sheet appeared, so this gate is what
+    // protects the experience rather than anything the API guarantees.
+    //
+    // localStorage only: unlike the games, this app does not carry the
+    // Preferences plugin, and the worst case of an evicted WebView is one
+    // repeat prompt rather than lost progress — not worth a dependency.
+    const reviewPlugin = window.Capacitor?.isNativePlatform?.()
+      ? window.Capacitor.Plugins?.InAppReview : null;
+    const RATE_COOKS_KEY = 'fs_rate_cooks';
+    const RATE_ASKED_KEY = 'fs_rate_asked';
+    const RATE_MIN_COOKS = 2;          // a finished cook is a bigger commitment than a game run
+    const RATE_COOLDOWN  = 90 * 24 * 60 * 60 * 1000;
+    let rateAskedThisLaunch = false;
+    const rateRead = k => { try { return parseInt(localStorage.getItem(k) || '0', 10); } catch (e) { return 0; } };
+    const rateWrite = (k, v) => { try { localStorage.setItem(k, String(v)); } catch (e) {} };
+
+    function askForReview() {
+      if (!reviewPlugin || rateAskedThisLaunch) return;
+      const cooks = rateRead(RATE_COOKS_KEY) + 1;
+      rateWrite(RATE_COOKS_KEY, cooks);
+      if (cooks < RATE_MIN_COOKS) return;
+      if (Date.now() - rateRead(RATE_ASKED_KEY) < RATE_COOLDOWN) return;
+      rateAskedThisLaunch = true;
+      rateWrite(RATE_ASKED_KEY, Date.now());
+      // after TIME'S UP has been on screen a moment, not over the top of it
+      setTimeout(() => { reviewPlugin.requestReview?.().catch(() => {}); }, 2000);
+    }
+
     // ─── SMOKER DATA ────────────────────────────────────────────────────────────
     const smokerCuts = {
       beef: [
@@ -233,6 +266,8 @@
       const remaining = Math.max(0, total - elapsed);
       const pct = total > 0 ? Math.min(100, (elapsed / total) * 100) : 0;
       const done = timerSecs && elapsed >= total;
+      // Fires once on the transition into "done", not on every re-render.
+      useEffect(() => { if (done) askForReview(); }, [!!done]);
       const startTimer = (secs) => { setTimerSecs(secs); setElapsed(0); setRunning(true); };
       const reset = () => { setRunning(false); setElapsed(0); setTimerSecs(null); };
 

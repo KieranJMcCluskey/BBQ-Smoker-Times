@@ -25,6 +25,7 @@
   "homepage": "https://github.com/KieranJMcCluskey/BBQ-Smoker-Times#readme",
   "private": "true",
   "dependencies": {
+    "@capacitor-community/in-app-review": "^8.0.0",
     "@capacitor/android": "^8.5.2",
     "@capacitor/cli": "^8.5.2",
     "@capacitor/core": "^8.5.2",
