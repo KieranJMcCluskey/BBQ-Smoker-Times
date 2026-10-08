@@ -14,8 +14,40 @@ image** to supply — the two fields that caused trouble on the games do not app
 ## App title (max 30 chars — currently 12)
 Fire & Smoke
 
-## Short description (Play, max 80 — currently 65)
-Cook temps, pull temps and timings for 70 cuts. Smoker and grill.
+## Short description (Play, max 80 — currently 76)
+BBQ meat temperatures and cook times for 70 cuts. Smoker and grill. Offline.
+
+  Replaces "Cook temps, pull temps and timings for 70 cuts. Smoker and grill."
+  (65). Play weights the short description heavily for ranking, and the old
+  one omitted the two words people actually type: BBQ and meat. "Offline"
+  earns its place — a genuine differentiator and a term people search.
+
+## App Store-specific fields
+
+### Subtitle (max 30 — currently 29)
+BBQ meat temps & smoker times
+
+  Replaces "Cook & Pull Temps and Timings". Adds BBQ, meat and smoker while
+  keeping temps and times.
+
+### Keywords (max 100, comma-separated, NO SPACES — spaces cost characters.
+### Title and subtitle auto-index, so nothing here repeats fire/smoke/bbq/meat/temps/smoker/times. Currently 97.)
+brisket,pork,ribs,grill,barbecue,thermometer,doneness,steak,internal,lowandslow,pitmaster,smoking
+
+  Cut names ARE the strategy. Someone searching "brisket" has far higher
+  intent and far fewer competitors than someone searching "BBQ". This is the
+  only app in the portfolio with real, durable search demand behind it.
+
+### Promotional text (max 170 — currently 149, editable anytime without review)
+70 cuts with cook temp, pull temp and timing for smoker and grill. Celsius or Fahrenheit. Works with no signal at the fire. Free, no ads, no account.
+
+  Worth refreshing each Australian summer — this app's best fortnight of the year.
+
+### What's New (this version)
+Every label and reading is now properly readable — the dim grey text has been
+fixed throughout. Choosing a cut jumps straight to its numbers instead of
+leaving you to scroll. And Fire & Smoke can now ask for a rating once a cook
+timer has run its course.
 
 ## Full description (Play: max 4000 — currently 1280)
 
